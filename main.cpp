@@ -34,7 +34,7 @@ struct User {
     void bookTicket();
     void checkIn();
     void database_inserter2();
-    void database_inserter3();
+    
 };
 void User::displayOptions() {
     cout << "Welcome to the Airplane Management System" << endl;
@@ -93,19 +93,19 @@ void User::displayOptions() {
 
 void User::registerCustomer() {
     char choose;
-    cout << "1)login to airport register"<<endl;
-    cout << "2)logout from register"<<endl;
+    string name, email, password, passportId;
+
+    cout <<"login to airport register"<<endl;
+    cout << "logout from register"<<endl;
     cin>>choose;
     if(choose=='1') {
+
         cout << "Enter your name: ";
         cin >> name;
         cout << "Enter your email address: ";
         cin >> email;
         cout << "Enter your password: ";
         cin >> password;
-        cout << "Enter your userID: ";
-        cin >> userId;
-        users[userId] = {name, email, password};
         cout << "If you need transportation outside of Ethiopia, we will require your passport." << endl;
         cout << "Press 1 if you have a passport." << endl;
         cout << "Press 2 if you do not have a passport." << endl;
@@ -120,30 +120,68 @@ void User::registerCustomer() {
         if (choice == 1) {
             cout << "Enter your passport id: ";
             cin >> passportId;
-            users[userId].push_back(passportId);
             cout << "Registration successful!" << endl;
         } else if (choice == 2) {
             cout << "Registration successful!" << endl;
+            passportId="0000";
         } else {
             cout << "Invalid choice" << endl;
             return;
         }
-        database_inserter3();
+        sqlite3* db;
+        char* zErrmsg;
+        int rc;
+        string sql;
+        rc = sqlite3_open("user.db", &db);
+        if(rc != SQLITE_OK) {
+            cout << "can't open database: " << sqlite3_errmsg(db) << endl;
+            return;
+        }
+        // enable foreign key
+        rc = sqlite3_exec(db,"PRAGMA FOREIGN_KEY = ON;" ,nullptr,nullptr, &zErrmsg);
+        if (rc != SQLITE_OK) {
+            cerr << "Can't foreign key: " << zErrmsg << endl;
+            sqlite3_free(zErrmsg);
+        }
+        sql = "CREATE TABLE IF NOT EXISTS REGISTRATION_user("
+              "USERID INTEGER PRIMARY KEY AUTOINCREMENT,"
+              "PASSWORD CHAR(50) NOT NULL,"
+              "NAME TEXT NOT NULL,"
+              "EMAIL CHAR(50) UNIQUE,"
+              "PASSPORTID CHAR(50) UNIQUE NULL);";
+        rc = sqlite3_exec(db,sql.c_str(),NULL,nullptr,&zErrmsg);
+        if (rc != SQLITE_OK){
+            cout << "sql error: " << zErrmsg << endl;
+            sqlite3_free(zErrmsg);
+        }
+        sql = "INSERT INTO REGISTRATION_user (PASSWORD, NAME, EMAIL, PASSPORTID)"
+              "VALUES ('" + password + "', '" + name + "', '" + email + "', '" + passportId + "');";
+        rc = sqlite3_exec(db,sql.c_str(),NULL,nullptr,&zErrmsg);
+        if(rc != SQLITE_OK) {
+            cout << "sql error: "<< zErrmsg << endl;
+            sqlite3_free(zErrmsg);
+        }
+        sqlite3_close(db);
     }
+
     else if(choose=='2') {
         cout << "Enter Email your: " ;
         cin >> email;
         sqlite3 *db;
         char *ZErrmsg = nullptr;
         int rc = sqlite3_open("user.db", &db);
+
         if (rc != SQLITE_OK) {
             cerr << "Cannot open database: " << sqlite3_errmsg(db) << endl;
             sqlite3_close(db);
             return;
         }
+
         string sql = "DELETE FROM REGISTRATION_user WHERE EMAIL = ?;";
+
         sqlite3_stmt *stmt;
         rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+
         if (rc == SQLITE_OK) {
             sqlite3_bind_text(stmt, 1, email.c_str(), -1, SQLITE_STATIC);
 
@@ -161,6 +199,7 @@ void User::registerCustomer() {
         sqlite3_close(db);
     }
 }
+
 void User::checkIn() {
     string inputEmail;
     cout << "Enter your email address: ";
@@ -328,49 +367,6 @@ void User::database_inserter2() {
         cout << "Booking successfully created!" << endl;
     }
     sqlite3_finalize(stmt);
-    sqlite3_close(db);
-}
-void User::database_inserter3() {
-    sqlite3* db;
-    char* zErrMsg = nullptr;
-    int rc;
-    string sql;
-    rc = sqlite3_open("user.db", &db);
-    if (rc) {
-        cout << "Can't open database: " << sqlite3_errmsg(db) << endl;
-        return;
-    }
-    // Enable foreign key support
-    rc = sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        cout << "Can't enable foreign key support: " << zErrMsg << endl;
-        sqlite3_free(zErrMsg);
-    }
-    sql = "CREATE TABLE IF NOT EXISTS REGISTRATION_user("
-          "USERID INTEGER PRIMARY KEY AUTOINCREMENT,"
-          "PASSWORD CHAR(50) NOT NULL,"
-          "NAME TEXT NOT NULL,"
-          "EMAIL CHAR(50) UNIQUE,"
-          "PASSPORTID CHAR(50) UNIQUE);";
-    rc = sqlite3_exec(db, sql.c_str(), NULL, nullptr, &zErrMsg);
-    if (rc != SQLITE_OK) {
-        cout << "SQL error: " << zErrMsg << endl;
-        sqlite3_free(zErrMsg);
-    }
-    for (const auto& user : users) {
-        string name = user.second.size() > 0 ? *next(user.second.begin(), 0) : "";
-        string email = user.second.size() > 1 ? *next(user.second.begin(), 1) : "";
-        string password = user.second.size() > 2 ? *next(user.second.begin(), 2) : "";
-        string passportId = user.second.size() > 3 ? *next(user.second.begin(), 3) : "";
-        sql = "INSERT INTO REGISTRATION_user (PASSWORD, NAME, EMAIL, PASSPORTID) "
-              "VALUES ('" + password + "', '" + name + "', '" + email + "', '" + passportId + "');";
-
-        rc = sqlite3_exec(db, sql.c_str(), NULL, nullptr, &zErrMsg);
-        if (rc != SQLITE_OK) {
-            cout << "SQL error: " << zErrMsg << endl;
-            sqlite3_free(zErrMsg);
-        }
-    }
     sqlite3_close(db);
 }
 
