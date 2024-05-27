@@ -23,7 +23,6 @@ struct User {
     string password;
     string passportId;
     string userId;
-    map<string, list<string>> users;
     map<string, list<string>>crew;
     map<string, list<string>>tracks;
     void crew_management();
@@ -371,126 +370,145 @@ void User::database_inserter2() {
 }
 
 void User::flight_Maintenanc(){
-char choose ;
-char cont;
-do {
-    char choose1;
-    cout << "\nAdmin menu:\n";
-    cout << "1. Add flight" << endl;
-    cout << "2. Delete flight" << endl;
-    cin >> choose1;
-    cin.ignore();
-    if (choose1 == '1') {
-        cout << "Enter flight id: ";
-        getline(cin, flight_id);
-        cout << "Arrival time: ";
-        getline(cin, arrival_time);
-        cout << "Arrival place: ";
-        getline(cin, arrival_place);
-        cout << "Destination time: ";
-        getline(cin, destination_time);
-        cout << "Destination place: ";
-        getline(cin, destination_place);
-        cout << "Enter plan id: ";
-        cin >> plan_id;
+    char choose ;
+    char cont;
+    do {
+        char choose1;
+        cout << "\nAdmin menu:\n";
+        cout << "1. Add flight" << endl;
+        cout << "2. Delete flight" << endl;
+        cin >> choose1;
         cin.ignore();
-        sqlite3 *db;
-        char *ZErrmsg = nullptr;
-        int rc = sqlite3_open("user.db", &db);
+        if (choose1 == '1') {
+            cout << "Enter flight id: ";
+            getline(cin, flight_id);
+            cout << "Arrival time: ";
+            getline(cin, arrival_time);
+            cout << "Arrival place: ";
+            getline(cin, arrival_place);
+            cout << "Destination time: ";
+            getline(cin, destination_time);
+            cout << "Destination place: ";
+            getline(cin, destination_place);
+            cout << "Enter plan id: ";
+            cin >> plan_id;
+            cin.ignore();
 
-        if (rc != SQLITE_OK) {
-            cerr << "Cannot open database: " << sqlite3_errmsg(db) << endl;
-            sqlite3_close(db);
-            return;
-        }
-        string sql = "SELECT * FROM MaintenanceTracking WHERE PLAN_ID = ?;";
-        sqlite3_stmt *stmt;
-        rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-        if (rc == SQLITE_OK) {
-            sqlite3_bind_text(stmt, 1, to_string(plan_id).c_str(), -1, SQLITE_STATIC);
-            rc = sqlite3_step(stmt);
-            if (rc != SQLITE_ROW) {
-                cerr << "Invalid plan id. Please enter a correct plan id." << endl;
-                sqlite3_finalize(stmt);
+            sqlite3 *db;
+            char *ZErrmsg = nullptr;
+            int rc = sqlite3_open("user.db", &db);
+
+            if (rc != SQLITE_OK) {
+                cerr << "Cannot open database: " << sqlite3_errmsg(db) << endl;
                 sqlite3_close(db);
                 return;
             }
-            sqlite3_finalize(stmt);
-        } else {
-            cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << endl;
-            sqlite3_close(db);
-            return;
-        }
-        sql = "CREATE TABLE IF NOT EXISTS FLIGHT_TABLE("
-              "FLIGHT_ID TEXT PRIMARY KEY NOT NULL, "
-              "PLAN_ID TEXT NOT NULL, "
-              "ARRIVAL_TIME TEXT NOT NULL, "
-              "ARRIVAL_PLACE TEXT NOT NULL, "
-              "DESTINATION_TIME TEXT NOT NULL, "
-              "DESTINATION_PLACE TEXT NOT NULL, "
-              "FOREIGN KEY(PLAN_ID) REFERENCES MaintenanceTracking (PLAN_ID)"
-              ");";
-        rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &ZErrmsg);
-        if (rc != SQLITE_OK) {
-            cerr << "SQL error: " << ZErrmsg << endl;
-            sqlite3_free(ZErrmsg);
-            sqlite3_close(db);
-            return;
-        }
-        string insertSql = "INSERT INTO FLIGHT_TABLE (PLAN_ID, ...) VALUES (?, ...);";
-        sql = "INSERT OR REPLACE INTO FLIGHT_TABLE(FLIGHT_ID, PLAN_ID, ARRIVAL_TIME, ARRIVAL_PLACE, DESTINATION_TIME, DESTINATION_PLACE) "
-              "VALUES (?, ?, ?, ?, ?, ?);";
-        rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-        if (rc == SQLITE_OK) {
-            sqlite3_bind_text(stmt, 1, flight_id.c_str(), -1, SQLITE_STATIC);
-            // Convert plan_id to string and then to C-style string
-            sqlite3_bind_text(stmt, 2, std::to_string(plan_id).c_str(), -1, SQLITE_STATIC);
-            sqlite3_bind_text(stmt, 3, arrival_time.c_str(), -1, SQLITE_STATIC);
-            sqlite3_bind_text(stmt, 4, arrival_place.c_str(), -1, SQLITE_STATIC);
-            sqlite3_bind_text(stmt, 5, destination_time.c_str(), -1, SQLITE_STATIC);
-            sqlite3_bind_text(stmt, 6, destination_place.c_str(), -1, SQLITE_STATIC);
-            rc = sqlite3_step(stmt);
-            if (rc != SQLITE_DONE) {
-                cerr << "Insertion failed: " << sqlite3_errmsg(db) << endl;
-            }
-            sqlite3_finalize(stmt);
-        } else {
-            cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << endl;
-        }
-        sqlite3_close(db);
-    } else if (choose1 == '2') {
-        cout << "Enter flight id: ";
-        getline(cin, flight_id);
 
-        sqlite3 *db;
-        char *ZErrmsg = nullptr;
-        int rc = sqlite3_open("user.db", &db);
-        if (rc != SQLITE_OK) {
-            cerr << "Cannot open database: " << sqlite3_errmsg(db) << endl;
-            sqlite3_close(db);
-            return;
-        }
-        string sql = "DELETE FROM FLIGHT_TABLE WHERE FLIGHT_ID = ?;";
-        sqlite3_stmt *stmt;
-        rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+            string sql = "SELECT * FROM MaintenanceTracking WHERE PLAN_ID = ?;";
+            sqlite3_stmt *stmt;
+            rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
 
-        if (rc == SQLITE_OK) {
-            sqlite3_bind_text(stmt, 1, flight_id.c_str(), -1, SQLITE_STATIC);
+            if (rc == SQLITE_OK) {
+                sqlite3_bind_text(stmt, 1, to_string(plan_id).c_str(), -1, SQLITE_STATIC);
+                rc = sqlite3_step(stmt);
 
-            rc = sqlite3_step(stmt);
+                if (rc != SQLITE_ROW) {
+                    cerr << "Invalid plan id. Please enter a correct plan id." << endl;
+                    sqlite3_finalize(stmt);
+                    sqlite3_close(db);
+                    return;
+                }
 
-            if (rc != SQLITE_DONE) {
-                cerr << "Deletion failed: " << sqlite3_errmsg(db) << endl;
+                sqlite3_finalize(stmt);
+            } else {
+                cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << endl;
+                sqlite3_close(db);
+                return;
             }
 
-            sqlite3_finalize(stmt);
-        } else {
-            cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << endl;
-        }
 
-        sqlite3_close(db);
-    }
-}while(choose=='y'||choose=='Y');
+            sql = "CREATE TABLE IF NOT EXISTS FLIGHT_TABLE("
+                  "FLIGHT_ID TEXT PRIMARY KEY NOT NULL, "
+                  "PLAN_ID TEXT NOT NULL, "
+                  "ARRIVAL_TIME TEXT NOT NULL, "
+                  "ARRIVAL_PLACE TEXT NOT NULL, "
+                  "DESTINATION_TIME TEXT NOT NULL, "
+                  "DESTINATION_PLACE TEXT NOT NULL, "
+                  "FOREIGN KEY(PLAN_ID) REFERENCES MaintenanceTracking (PLAN_ID)"
+                  ");";
+
+            rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &ZErrmsg);
+
+            if (rc != SQLITE_OK) {
+                cerr << "SQL error: " << ZErrmsg << endl;
+                sqlite3_free(ZErrmsg);
+                sqlite3_close(db);
+                return;
+            }
+            string insertSql = "INSERT INTO FLIGHT_TABLE (PLAN_ID, ...) VALUES (?, ...);";
+            sql = "INSERT OR REPLACE INTO FLIGHT_TABLE(FLIGHT_ID, PLAN_ID, ARRIVAL_TIME, ARRIVAL_PLACE, DESTINATION_TIME, DESTINATION_PLACE) "
+                  "VALUES (?, ?, ?, ?, ?, ?);";
+
+            rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+
+            if (rc == SQLITE_OK) {
+                sqlite3_bind_text(stmt, 1, flight_id.c_str(), -1, SQLITE_STATIC);
+                // Convert plan_id to string and then to C-style string
+                sqlite3_bind_text(stmt, 2, std::to_string(plan_id).c_str(), -1, SQLITE_STATIC);
+                sqlite3_bind_text(stmt, 3, arrival_time.c_str(), -1, SQLITE_STATIC);
+                sqlite3_bind_text(stmt, 4, arrival_place.c_str(), -1, SQLITE_STATIC);
+                sqlite3_bind_text(stmt, 5, destination_time.c_str(), -1, SQLITE_STATIC);
+                sqlite3_bind_text(stmt, 6, destination_place.c_str(), -1, SQLITE_STATIC);
+
+                rc = sqlite3_step(stmt);
+
+                if (rc != SQLITE_DONE) {
+                    cerr << "Insertion failed: " << sqlite3_errmsg(db) << endl;
+                }
+
+                sqlite3_finalize(stmt);
+            } else {
+                cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << endl;
+            }
+
+            sqlite3_close(db);
+        } else if (choose1 == '2') {
+
+            cout << "Enter flight id: ";
+            getline(cin, flight_id);
+
+            sqlite3 *db;
+            char *ZErrmsg = nullptr;
+            int rc = sqlite3_open("user.db", &db);
+
+            if (rc != SQLITE_OK) {
+                cerr << "Cannot open database: " << sqlite3_errmsg(db) << endl;
+                sqlite3_close(db);
+                return;
+            }
+
+            string sql = "DELETE FROM FLIGHT_TABLE WHERE FLIGHT_ID = ?;";
+
+            sqlite3_stmt *stmt;
+            rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+
+            if (rc == SQLITE_OK) {
+                sqlite3_bind_text(stmt, 1, flight_id.c_str(), -1, SQLITE_STATIC);
+
+                rc = sqlite3_step(stmt);
+
+                if (rc != SQLITE_DONE) {
+                    cerr << "Deletion failed: " << sqlite3_errmsg(db) << endl;
+                }
+
+                sqlite3_finalize(stmt);
+            } else {
+                cerr << "Failed to execute statement: " << sqlite3_errmsg(db) << endl;
+            }
+
+            sqlite3_close(db);
+        }
+    }while(choose=='y'||choose=='Y');
 
 }
 void User::crew_management(){
@@ -513,6 +531,7 @@ void User::crew_management(){
             cout << "Enter employ work space: ";
             cin >> workspace;
             crew[employId] = {employName, workspace};
+
 
             sqlite3 *db;
             int rc;
@@ -556,26 +575,28 @@ void User::crew_management(){
         } else if (choose == '2') {
             cout <<"Enter employment ID";
             cin >> employId;
-                sqlite3 *db;
-                int rc;
-                char *zErrmsg= nullptr;
-                string sql;
-                rc = sqlite3_open("user.db",&db);
-                if(rc!=SQLITE_OK) {
-                    cout << "Database connection is failed: "<<endl;
-                    cout << "Error: " << sqlite3_errmsg(db) << endl;
-                    sqlite3_free(zErrmsg);
-                    return;
-                }
-                // delete employee from database from database
-                sql = "DELETE FROM CREW_TABLE WHERE EMPLOYEE_ID ='" + employId + "'; ";
-                rc = sqlite3_exec(db,sql.c_str(),nullptr,nullptr,&zErrmsg);
-                if(rc!=SQLITE_OK){
-                    cout << "sql error: "<<zErrmsg << endl;
-                    sqlite3_free(zErrmsg);
-                }
-                cout << "the employee was deleted"<<endl;
-                sqlite3_close(db);
+            sqlite3 *db;
+            int rc;
+            char *zErrmsg= nullptr;
+            string sql;
+            rc = sqlite3_open("user.db",&db);
+            if(rc!=SQLITE_OK) {
+                cout << "Database connection is failed: "<<endl;
+                cout << "Error: " << sqlite3_errmsg(db) << endl;
+                sqlite3_free(zErrmsg);
+                return;
+            }
+            // delete employee from database from database
+            sql = "DELETE FROM CREW_TABLE WHERE EMPLOYEE_ID ='" + employId + "'; ";
+            rc = sqlite3_exec(db,sql.c_str(),nullptr,nullptr,&zErrmsg);
+            if(rc!=SQLITE_OK){
+                cout << "sql error: "<<zErrmsg << endl;
+                sqlite3_free(zErrmsg);
+            }
+            cout << "the employee was deleted"<<endl;
+            sqlite3_close(db);
+
+
         } else if (choose == '3') {
             cout << "Exit to crew management" << endl;
             exit(0);
@@ -585,6 +606,7 @@ void User::crew_management(){
         cout << "If you go to admin menu enter Y/n" << endl;
         cin >> cont;
     } while(cont == 'y' || cont == 'Y');
+
 }
 void User::MaintenanceTracking() {
     char choose;
@@ -596,7 +618,10 @@ void User::MaintenanceTracking() {
         cout << "Enter your choice: ";
         cin >> ch1;
         cin.ignore();
+
         if (ch1 == '1'){
+
+
             cout << "Enter plan id: ";
             if (!(cin >> plan_id)) {
                 cerr << "Invalid plan ID input. Please enter an integer." << endl;
@@ -608,17 +633,17 @@ void User::MaintenanceTracking() {
             cout << "Enter plan name: ";
             getline(cin, planName);
             tracks[to_string(plan_id)] = {planName};
-             sqlite3* db;
-             int rc;
-             char* ZErrmsg = nullptr;
-             string sql;
-             rc = sqlite3_open("user.db",&db);
-             if(rc !=SQLITE_OK){
-                 cout << "Database connection is not established"<< endl;
-                 cout << "Error: " << sqlite3_errmsg(db) << endl;
-                 sqlite3_free(ZErrmsg);
-                 return;
-             }
+            sqlite3* db;
+            int rc;
+            char* ZErrmsg = nullptr;
+            string sql;
+            rc = sqlite3_open("user.db",&db);
+            if(rc !=SQLITE_OK){
+                cout << "Database connection is not established"<< endl;
+                cout << "Error: " << sqlite3_errmsg(db) << endl;
+                sqlite3_free(ZErrmsg);
+                return;
+            }
             rc = sqlite3_exec(db, "PRAGMA foreign_keys=ON;", nullptr, nullptr, &ZErrmsg);
             if (rc != SQLITE_OK) {
                 cerr << "Can't enable foreign key support: " << ZErrmsg << endl;
@@ -627,8 +652,8 @@ void User::MaintenanceTracking() {
                 continue;
             }
             sql = "CREATE TABLE IF NOT EXISTS MaintenanceTracking ("
-                         "PLAN_ID TEXT PRIMARY KEY NOT NULL,"
-                         "PLAN_NAME TEXT NOT NULL);";
+                  "PLAN_ID TEXT PRIMARY KEY NOT NULL,"
+                  "PLAN_NAME TEXT NOT NULL);";
             rc = sqlite3_exec(db, sql.c_str(), nullptr, nullptr, &ZErrmsg);
             if (rc != SQLITE_OK) {
                 cerr << "SQL error: " << ZErrmsg << endl;
@@ -637,6 +662,7 @@ void User::MaintenanceTracking() {
             for (const auto &track: tracks) {
                 string planId = track.first;
                 string planName = *track.second.begin();
+
                 sqlite3_stmt *stmt;
                 string checkSql = "SELECT COUNT(*) FROM MaintenanceTracking WHERE PLAN_ID = ?;";
                 rc = sqlite3_prepare_v2(db, checkSql.c_str(), -1, &stmt, nullptr);
@@ -669,45 +695,51 @@ void User::MaintenanceTracking() {
             sqlite3_close(db);
 
         }
-            else if (ch1 == '2') {
-                cout << "Enter plan id: ";
-                if (!(cin >> plan_id)) {
-                    cerr << "Invalid plan ID input. Please enter an integer." << endl;
-                    cin.clear();
-                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                    continue;
-                }
 
-                    sqlite3 *db;
-                    char *zErrMsg = nullptr;
-                    int rc = sqlite3_open("user.db", &db);
-                    if (rc != SQLITE_OK) {
-                        cerr << "Cannot open database: " << sqlite3_errmsg(db) << endl;
-                        sqlite3_close(db);
-                        continue;
-                    }
+        else if (ch1 == '2') {
 
-                    string sql = "DELETE FROM MaintenanceTracking WHERE PLAN_ID = ?;";
-                    sqlite3_stmt *stmt;
 
-                    rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
-                    if (rc != SQLITE_OK) {
-                        cerr << "Failed to fetch data: " << sqlite3_errmsg(db) << endl;
-                        sqlite3_close(db);
-                        continue;
-                    }
-
-                    sqlite3_bind_text(stmt, 1, to_string(plan_id).c_str(), -1, SQLITE_STATIC);
-
-                    rc = sqlite3_step(stmt);
-                    if (rc != SQLITE_DONE) {
-                        cerr << "Deletion failed: " << sqlite3_errmsg(db) << endl;
-                    }
-
-                    sqlite3_finalize(stmt);
-                    sqlite3_close(db);
-
+            cout << "Enter plan id: ";
+            if (!(cin >> plan_id)) {
+                cerr << "Invalid plan ID input. Please enter an integer." << endl;
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                continue;
             }
+
+            sqlite3 *db;
+            char *zErrMsg = nullptr;
+            int rc = sqlite3_open("user.db", &db);
+            if (rc != SQLITE_OK) {
+                cerr << "Cannot open database: " << sqlite3_errmsg(db) << endl;
+                sqlite3_close(db);
+                continue;
+            }
+
+
+            string sql = "DELETE FROM MaintenanceTracking WHERE PLAN_ID = ?;";
+            sqlite3_stmt *stmt;
+
+            rc = sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr);
+            if (rc != SQLITE_OK) {
+                cerr << "Failed to fetch data: " << sqlite3_errmsg(db) << endl;
+                sqlite3_close(db);
+                continue;
+            }
+
+            sqlite3_bind_text(stmt, 1, to_string(plan_id).c_str(), -1, SQLITE_STATIC);
+
+            rc = sqlite3_step(stmt);
+            if (rc != SQLITE_DONE) {
+                cerr << "Deletion failed: " << sqlite3_errmsg(db) << endl;
+            }
+
+            sqlite3_finalize(stmt);
+            sqlite3_close(db);
+
+        }
+
+
         else {
             cerr << "your input is invalid" << endl;
         }
@@ -715,7 +747,10 @@ void User::MaintenanceTracking() {
         cin >> choose;
     }while(choose =='y'||choose == 'Y');
 }
+
+
 int main() {
+
     User user;
     char choice = 'y';
     while(choice == 'y' || choice == 'Y') {
@@ -724,5 +759,7 @@ int main() {
         cin >> choice;
         cin.ignore();
     }
+
+
     return 0;
 }
